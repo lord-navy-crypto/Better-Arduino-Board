@@ -83,6 +83,8 @@ export default function App({ navigationRequest = null, onNavigate }: { navigati
   const [status, setStatus] = useState('Ready');
   const [busy, setBusy] = useState(false);
   const [measurement, setMeasurement] = useState<MeasurementResult | null>(null);
+  // No board firmware is overwritten until the person confirms the exact target.
+  const [uploadReview, setUploadReview] = useState<{recipeId:string;title:string;port:string;fqbn:string}|null>(null);
   const [parameterValues, setParameterValues] = useState<Record<string, string>>({});
   const [presetName, setPresetName] = useState('');
   const [developerTemplateRequest, setDeveloperTemplateRequest] = useState<{ id: string; token: number } | null>(null);
@@ -245,8 +247,22 @@ export default function App({ navigationRequest = null, onNavigate }: { navigati
     finally { setBusy(false); }
   }
 
+  function requestUpload() {
+    if (!recipe || busy) return;
+    if (!diagnosis.canUpload || !selectedPort) {
+      setStatus('Upload is not ready: check Hardware Doctor and select a serial port.');
+      return;
+    }
+    setUploadReview({recipeId:recipe.id,title:recipe.title,port:selectedPort,fqbn});
+  }
   async function upload() {
     if (!recipe) return;
+    const approved=uploadReview;
+    setUploadReview(null);
+    if (!approved || approved.recipeId!==recipe.id || approved.port!==selectedPort || approved.fqbn!==fqbn) {
+      setStatus('Upload cancelled: recipe, board profile or selected port changed. Review the target again.');
+      return;
+    }
     if (!diagnosis.canUpload) { setStatus(`Upload blocked by Hardware Doctor: ${diagnosis.title} · ${diagnosis.action}`); return; }
     if (!selectedPort) { setStatus('Select a serial port first.'); return; }
     const path = sketchDir || await prepare(); if (!path) return;
@@ -376,9 +392,22 @@ export default function App({ navigationRequest = null, onNavigate }: { navigati
           <div className="action-row">
             <button className="ghost" disabled={busy || !recipe} onClick={() => void prepare()}><Braces size={16}/> Prepare firmware</button>
             <button className="ghost" disabled={busy || !recipe || !diagnosis.canCompile} onClick={() => void compile()}><Download size={16}/> Compile</button>
-            <button className="primary" disabled={busy || !recipe || !diagnosis.canUpload} onClick={() => void upload()}><Upload size={16}/> Compile & Upload</button>
+            <button className="primary" disabled={busy || !recipe || !diagnosis.canUpload} onClick={requestUpload}><Upload size={16}/> Review & Upload</button>
             {recipe?.capture_mode !== 'none' && <button className="primary secondary" disabled={busy || !selectedPort} onClick={() => setTab('data')}><Waves size={16}/> Open Monitor & Data</button>}
           </div>
+          {uploadReview&&<div className="panel" role="region" aria-label="Confirm firmware upload destination" style={{border:"1px solid #d99d43",marginTop:14}}>
+            <div className="panel-title"><ShieldCheck size={18}/> Confirm programming destination</div>
+            <p>Uploading new firmware replaces the program currently running on the selected board. Verify this exact target before continuing.</p>
+            <div className="schema-row">
+              <span>Recipe: {uploadReview.title}</span>
+              <span>Serial port: {uploadReview.port}</span>
+              <span>Board profile: {uploadReview.fqbn}</span>
+            </div>
+            <div className="action-row">
+              <button className="primary" disabled={busy} onClick={() => void upload()}><Upload size={16}/> Confirm & Upload</button>
+              <button className="ghost" onClick={() => {setUploadReview(null);setStatus('Upload cancelled. The current board firmware was not changed.');}}>Cancel</button>
+            </div>
+          </div>}
         </section>
       </div>
 
