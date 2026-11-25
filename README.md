@@ -1,6 +1,6 @@
 # BetterBoard Studio
 
-**Alpha 0.2.0-a1** — a goal-first physical-computing desktop environment.
+**Current package version: `0.2.0-alpha.8`** — a goal-first physical-computing desktop environment.
 
 BetterBoard does not try to be another Arduino IDE skin. It turns the setup chain into one workflow:
 
@@ -33,6 +33,27 @@ The application entry bar switches between:
 ```text
 BetterBoard Studio | Numerical Bench 01–03 | Magnet Bench 01–03
 ```
+
+## Current main-branch snapshot
+
+The package metadata identifies the current source version as **0.2.0-alpha.8**. The main branch also contains later source improvements that have not been given a new version tag; they are described here without claiming a newer published release.
+
+### Safer hardware programming
+
+The upload action is now **Review & Upload**, not immediate programming. Before firmware is written, BetterBoard displays the exact recipe, serial port and board profile (FQBN). Confirmation is accepted only if those values still match; if the recipe, port or board profile changes, the pending upload is cancelled and must be reviewed again. This prevents a stale UI selection from silently programming a different target.
+
+### Developer and project workspace
+
+- Monaco-based Arduino/C++ editing with syntax highlighting, line numbers, folding, find/replace and compiler diagnostics.
+- Board and library management, Sketchbook project/file operations, bounded draft recovery, Go to Definition (F12), Arduino API hover help and a real `clang-format` action when the formatter is installed.
+- Persistent workspaces preserve editor, monitor, experiment and capture state while users move between areas.
+
+### Measurement and engineering observability
+
+- Observatory connects operational state, measurements and engineering evidence; Status Map and diagnostic surfaces help identify where a workflow is blocked.
+- Engineering plots use labeled axes, units and time-domain values instead of normalized display-only traces.
+- BetterBoard continues to hand off measured data to Physical Lab for scientific model comparison and validation; acquisition itself does not establish calibration or sensor accuracy.
+- OpenPenguin is an optional, explicitly connected local-AI provider and is not required for core hardware, circuit or measurement workflows.
 
 ## What changed in v0.2
 
